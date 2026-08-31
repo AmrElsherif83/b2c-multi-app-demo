@@ -3,6 +3,7 @@ import Home         from './pages/Home';
 import AuthCallback from './pages/AuthCallback';
 import Welcome      from './pages/Welcome';
 import SignIn       from './pages/SignIn';
+import Invites      from './pages/Invites';
 import ProtectedRoute from './components/ProtectedRoute';
 
 export function AppRoutes() {
@@ -10,6 +11,7 @@ export function AppRoutes() {
     <Routes>
       <Route path="/"              element={<Home />} />
       <Route path="/signin"        element={<SignIn />} />
+      <Route path="/invites"        element={<Invites />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route
         path="/welcome"

@@ -122,6 +122,28 @@ export function clearPendingAuth(): void {
 }
 
 /**
+ * Trigger B2C invitation signup redirect.
+ * Passes the token as an extra query parameter so the B2C custom policy
+ * can pre-fill the signup form. Uses the same SUSI policy as normal login.
+ */
+export async function loginWithB2CInviteRedirect(
+  appId: string,
+  env: string,
+  config: B2CEnvConfig,
+  inviteToken: string,
+): Promise<void> {
+  const instance = await initializeMsalInstance(appId, env, config);
+  clearStaleInteraction();
+  await instance.loginRedirect({
+    scopes: config.scopes,
+    extraQueryParameters: {
+      // Explicit encoding — MSAL does not guarantee safe encoding of base64 chars in URLs
+      invitation_code: encodeURIComponent(inviteToken),
+    },
+  });
+}
+
+/**
  * Remove any stale MSAL interaction.status entries left by an incomplete
  * redirect (e.g., user navigated away mid-flow). Without this, MSAL throws
  * interaction_in_progress on the next loginRedirect() call.

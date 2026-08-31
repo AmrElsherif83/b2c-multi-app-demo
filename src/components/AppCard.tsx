@@ -8,14 +8,30 @@ interface AppCardProps {
 }
 
 export default function AppCard({ app }: AppCardProps) {
-  const [selectedEnv, setSelectedEnv] = useState<Environment>('dev');
+  const [selectedEnv, setSelectedEnv]   = useState<Environment>('dev');
+  const [error, setError]               = useState<string | null>(null);
+  const [inviteToken, setInviteToken]   = useState('');
 
-  const envCfg      = getEnvConfig(app.id, selectedEnv);
-  const canLogin    = isConfigured(envCfg);
+  const envCfg        = getEnvConfig(app.id, selectedEnv);
+  const canLogin      = isConfigured(envCfg);
+  // invitation flow is active when the env has a validate URL configured
+  const hasInviteFlow = canLogin && !!envCfg?.inviteValidateUrl;
 
   function handleLogin() {
     if (!envCfg || !canLogin) return;
-    window.open(`/signin?appId=${encodeURIComponent(app.id)}&env=${encodeURIComponent(selectedEnv)}`, '_blank');
+    window.open(
+      `/signin?appId=${encodeURIComponent(app.id)}&env=${encodeURIComponent(selectedEnv)}`,
+      '_blank',
+    );
+  }
+
+  function handleInvite() {
+    if (!inviteToken.trim()) { setError('Please enter your invitation token.'); return; }
+    setError(null);
+    window.open(
+      `/invites?appId=${encodeURIComponent(app.id)}&env=${encodeURIComponent(selectedEnv)}&token=${encodeURIComponent(inviteToken.trim())}`,
+      '_blank',
+    );
   }
 
   return (
@@ -44,7 +60,7 @@ export default function AppCard({ app }: AppCardProps) {
             return (
               <button
                 key={envDef.id}
-                onClick={() => { setSelectedEnv(envDef.id); setError(null); }}
+                onClick={() => { setSelectedEnv(envDef.id); setError(null); setInviteToken(''); }}
                 disabled={!configured}
                 title={configured ? undefined : `Set VITE_${app.id.toUpperCase()}_${envDef.label}_* in .env`}
                 className={[
@@ -73,6 +89,12 @@ export default function AppCard({ app }: AppCardProps) {
             <div><span className="text-gray-500 font-sans font-medium">Tenant: </span>{envCfg.tenantDomain}</div>
             <div><span className="text-gray-500 font-sans font-medium">Policy: </span>{envCfg.policy}</div>
             <div><span className="text-gray-500 font-sans font-medium">Client: </span>{envCfg.clientId.substring(0, 8)}…</div>
+            <div>
+              <span className="text-gray-500 font-sans font-medium">Invite flow: </span>
+              {hasInviteFlow
+                ? <span className="text-emerald-600 font-sans font-semibold">enabled</span>
+                : <span className="text-gray-400 font-sans">disabled</span>}
+            </div>
           </div>
         )}
 
@@ -88,8 +110,47 @@ export default function AppCard({ app }: AppCardProps) {
         )}
 
         {/* Error */}
+        {error && (
+          <div className="text-xs text-red-700 bg-red-50 rounded-lg p-3 mb-4 border border-red-200">
+            ⚠️ {error}
+          </div>
+        )}
 
-        {/* Login button — pushed to bottom */}
+        {/* ── Invitation flow section (only when env has inviteValidateUrl) ── */}
+        {hasInviteFlow && (
+          <>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex-1 h-px bg-gray-100" />
+              <span className="text-xs text-gray-400">invitation signup</span>
+              <div className="flex-1 h-px bg-gray-100" />
+            </div>
+
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={inviteToken}
+                onChange={e => { setInviteToken(e.target.value); setError(null); }}
+                onKeyDown={e => { if (e.key === 'Enter') handleInvite(); }}
+                placeholder="Paste invitation token…"
+                className="flex-1 min-w-0 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 placeholder-gray-300"
+              />
+              <button
+                onClick={handleInvite}
+                disabled={!inviteToken.trim()}
+                className={[
+                  'shrink-0 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150',
+                  inviteToken.trim()
+                    ? `bg-gradient-to-r ${app.gradient} text-white hover:opacity-90 active:scale-95`
+                    : 'bg-gray-100 text-gray-300 cursor-not-allowed',
+                ].join(' ')}
+              >
+                Sign up
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Normal sign-in button — pushed to bottom */}
         <button
           onClick={handleLogin}
           disabled={!canLogin}

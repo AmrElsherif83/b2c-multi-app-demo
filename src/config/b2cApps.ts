@@ -8,10 +8,11 @@
 export type Environment = 'dev' | 'stage' | 'prod';
 
 export interface B2CEnvConfig {
-  tenantDomain: string; // e.g. "ecab2cdev.onmicrosoft.com"
-  clientId: string;     // Azure App Registration client ID
-  policy: string;       // B2C policy name, e.g. "B2C_1A_SUSI"
-  scopes: string[];     // OIDC scopes
+  tenantDomain: string;       // e.g. "ecab2cdev.onmicrosoft.com"
+  clientId: string;           // Azure App Registration client ID
+  policy: string;             // B2C policy name, e.g. "B2C_1A_SUSI"
+  scopes: string[];           // OIDC scopes
+  inviteValidateUrl?: string; // Power Automate URL: POST { Token } → { tokenValid }
 }
 
 export interface B2CAppConfig {
@@ -36,10 +37,11 @@ function parseScopes(raw: string | undefined): string[] {
  */
 function envConfig(prefix: string, env: string): B2CEnvConfig {
   return {
-    tenantDomain: e[`${prefix}_${env}_TENANT_DOMAIN`] ?? '',
-    clientId:     e[`${prefix}_${env}_CLIENT_ID`]     ?? '',
-    policy:       e[`${prefix}_${env}_POLICY`]         ?? '',
-    scopes:       parseScopes(e[`${prefix}_${env}_SCOPE`]),
+    tenantDomain:      e[`${prefix}_${env}_TENANT_DOMAIN`]        ?? '',
+    clientId:          e[`${prefix}_${env}_CLIENT_ID`]             ?? '',
+    policy:            e[`${prefix}_${env}_POLICY`]                ?? '',
+    scopes:            parseScopes(e[`${prefix}_${env}_SCOPE`]),
+    inviteValidateUrl: e[`${prefix}_${env}_INVITE_VALIDATE_URL`],
   };
 }
 
